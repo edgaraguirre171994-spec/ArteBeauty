@@ -1,4 +1,4 @@
-console.info("ArtBeauty V3.4.0 cargado correctamente");
+console.info("ArtBeauty V3.5.0 cargado correctamente");
 const API_URL = "https://script.google.com/macros/s/AKfycbyNdSbHFgVadu08GVDlNQT5Dqat97l8pi33nVlkDBcBv1o-unYV8Gewq4Fi2NdK7ywNGw/exec";
 const state = { user:null, dashboard:null, citas:[], clientas:[], servicios:[], pagos:[], configuracion:{}, calendarView:"week", calendarDate:new Date() };
 const $ = id => document.getElementById(id);
@@ -92,6 +92,13 @@ function bindEvents(){
   $("loyaltyForm").onsubmit=saveLoyaltyMovement;
   $("loyaltySearchInput").oninput=renderLoyaltyPage;
   document.querySelectorAll(".loyalty-tab").forEach(btn=>btn.onclick=()=>switchLoyaltyTab(btn.dataset.loyaltyTab));
+  $("whatsappFilter").onchange=renderWhatsAppPage;
+  $("whatsappSearch").oninput=renderWhatsAppPage;
+  $("whatsappClose").onclick=()=>$("whatsappDialog").close();
+  $("whatsappTemplate").onchange=refreshWhatsAppMessage;
+  $("whatsappForm").onsubmit=openWhatsAppMessage;
+  $("whatsappCopy").onclick=copyWhatsAppMessage;
+  $("whatsappSave").onclick=saveWhatsAppStatus;
   $("modalClose").onclick=closeModal;$("modalCancel").onclick=closeModal;$("modalForm").onsubmit=saveModal;
   $("aiSend").onclick=sendAI;$("aiInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendAI()});
   document.querySelectorAll(".quick-prompts button").forEach(b=>b.onclick=()=>{$("aiInput").value=b.textContent;sendAI()});
@@ -130,7 +137,8 @@ async function loadAll(){
   }catch(err){toast(err.message,true);$("apiStatus").textContent="Sin conexión";$("apiStatus").style.color="var(--danger)"}finally{loading(false)}
 }
 function renderAll(){renderDashboard();
-  renderLoyaltyPage();renderAppointments();renderClients();renderServices();renderPayments();renderReception();renderSettings();renderAIRecommendations()}
+  renderLoyaltyPage();
+  renderWhatsAppPage();renderAppointments();renderClients();renderServices();renderPayments();renderReception();renderSettings();renderAIRecommendations()}
 
 function renderDashboard(){
   renderDashboardPro();
@@ -288,10 +296,10 @@ function renderUpcomingAppointments(){
     const d=parseLocalDate(dateKey(c.Fecha));
     return d>=new Date(now.getFullYear(),now.getMonth(),now.getDate()) && !["cancelada","completada"].includes(String(c.Estado||"").toLowerCase());
   }).sort((a,b)=>`${dateKey(a.Fecha)} ${normalizeTime(a.HoraInicio)}`.localeCompare(`${dateKey(b.Fecha)} ${normalizeTime(b.HoraInicio)}`)).slice(0,6);
-  $("upcomingAppointments").innerHTML=items.length?items.map(c=>`<article onclick='editAppointment(${JSON.stringify(c.ID)})'>
-    <div class="upcoming-date"><strong>${formatDay(parseLocalDate(c.Fecha),{day:"2-digit"})}</strong><span>${formatDay(parseLocalDate(c.Fecha),{month:"short"})}</span></div>
-    <div><strong>${esc(c.ClientaNombre||"Clienta")}</strong><small>${esc(displayTime(c.HoraInicio))} · ${esc(c.Servicio||"")}</small></div>
-    <span class="badge ${slug(c.Estado)}">${esc(c.Estado||"Pendiente")}</span>
+  $("upcomingAppointments").innerHTML=items.length?items.map(c=>`<article>
+    <div class="upcoming-date" onclick='editAppointment(${JSON.stringify(c.ID)})'><strong>${formatDay(parseLocalDate(c.Fecha),{day:"2-digit"})}</strong><span>${formatDay(parseLocalDate(c.Fecha),{month:"short"})}</span></div>
+    <div onclick='editAppointment(${JSON.stringify(c.ID)})'><strong>${esc(c.ClientaNombre||"Clienta")}</strong><small>${esc(displayTime(c.HoraInicio))} · ${esc(c.Servicio||"")}</small></div>
+    <button class="whatsapp-mini-btn" onclick='event.stopPropagation();openWhatsAppDialog(${JSON.stringify(c.ID)})'>WhatsApp</button>
   </article>`).join(""):'<div class="empty">No hay próximas citas.</div>';
 }
 function listAppointments(items){
@@ -973,4 +981,198 @@ async function renderLoyaltyPage(){
       <button type="button" class="secondary">Administrar</button>
     </article>`;
   }).join(""):`<div class="empty">No se encontraron clientas.</div>`;
+}
+
+
+/* ===== ArtBeauty V3.5 · WhatsApp y confirmaciones ===== */
+const WHATSAPP_DB_NAME="ArtBeautyWhatsApp";
+const WHATSAPP_STORE="messages";
+let whatsappDBPromise=null;
+
+function openWhatsAppDB(){
+  if(whatsappDBPromise)return whatsappDBPromise;
+  whatsappDBPromise=new Promise((resolve,reject)=>{
+    const req=indexedDB.open(WHATSAPP_DB_NAME,1);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(WHATSAPP_STORE)){
+        const store=db.createObjectStore(WHATSAPP_STORE,{keyPath:"appointmentId"});
+        store.createIndex("updatedAt","updatedAt",{unique:false});
+      }
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+  return whatsappDBPromise;
+}
+async function whatsappGet(appointmentId){
+  const db=await openWhatsAppDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(WHATSAPP_STORE,"readonly");
+    const req=tx.objectStore(WHATSAPP_STORE).get(String(appointmentId));
+    req.onsuccess=()=>resolve(req.result||null);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function whatsappPut(record){
+  const db=await openWhatsAppDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(WHATSAPP_STORE,"readwrite");
+    tx.objectStore(WHATSAPP_STORE).put(record);
+    tx.oncomplete=()=>resolve(record);
+    tx.onerror=()=>reject(tx.error);
+  });
+}
+function appointmentClient(c){
+  return state.clientas.find(x=>String(x.ID)===String(c.ClientaID)) ||
+    state.clientas.find(x=>String(x.Nombre||"").trim().toLowerCase()===String(c.ClientaNombre||"").trim().toLowerCase()) || {};
+}
+function cleanWhatsAppPhone(value){
+  let digits=String(value||"").replace(/\D/g,"");
+  if(digits.length===10)digits="1"+digits;
+  return digits;
+}
+function appointmentFriendlyDate(value){
+  const d=parseLocalDate(dateKey(value));
+  return formatDay(d,{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+}
+function whatsappTemplateText(type,c,client){
+  const name=c.ClientaNombre||client.Nombre||"";
+  const date=appointmentFriendlyDate(c.Fecha);
+  const time=displayTime(c.HoraInicio);
+  const service=c.Servicio||"tu servicio";
+  const business="ArtBeauty";
+  const templates={
+    confirmation:`Hola ${name} 🌸\n\nTe escribimos de ${business} para confirmar tu cita:\n📅 ${date}\n⏰ ${time}\n💅 Servicio: ${service}\n\n¿Nos confirmas tu asistencia, por favor?`,
+    dayBefore:`Hola ${name} 🌸\n\nTe recordamos que mañana tienes una cita en ${business}:\n📅 ${date}\n⏰ ${time}\n💅 Servicio: ${service}\n\nPor favor, responde para confirmar que podrás asistir.`,
+    sameDay:`Hola ${name} 🌸\n\nEste es un recordatorio de tu cita de hoy en ${business}:\n⏰ ${time}\n💅 Servicio: ${service}\n\nTe esperamos. ✨`,
+    thanks:`Hola ${name} 💖\n\nGracias por visitar ${business}. Esperamos que te haya encantado tu servicio de ${service}.\n\nSerá un gusto atenderte nuevamente. ✨`,
+    return:`Hola ${name} 🌸\n\nHace tiempo que no te vemos en ${business}. Nos encantará atenderte nuevamente.\n\nEscríbenos para reservar tu próxima cita. 💅✨`,
+    custom:""
+  };
+  return templates[type]??"";
+}
+async function whatsappStatusFor(c){
+  return await whatsappGet(c.ID);
+}
+window.openWhatsAppDialog=async appointmentId=>{
+  const c=state.citas.find(x=>String(x.ID)===String(appointmentId));
+  if(!c){toast("No se encontró la cita.",true);return}
+  const client=appointmentClient(c);
+  const saved=await whatsappGet(c.ID);
+  $("whatsappAppointmentId").value=c.ID;
+  $("whatsappDialogTitle").textContent=`Mensaje para ${c.ClientaNombre||client.Nombre||"clienta"}`;
+  $("whatsappPhone").value=saved?.phone||client.Telefono||c.Telefono||"";
+  $("whatsappTemplate").value=saved?.template||"confirmation";
+  $("whatsappStatus").value=saved?.status||"Pendiente";
+  $("whatsappMessage").value=saved?.message||whatsappTemplateText($("whatsappTemplate").value,c,client);
+  $("whatsappDialog").showModal();
+};
+function refreshWhatsAppMessage(){
+  const c=state.citas.find(x=>String(x.ID)===String($("whatsappAppointmentId").value));
+  if(!c)return;
+  $("whatsappMessage").value=whatsappTemplateText($("whatsappTemplate").value,c,appointmentClient(c));
+}
+async function saveWhatsAppStatus(){
+  const appointmentId=$("whatsappAppointmentId").value;
+  if(!appointmentId)return;
+  await whatsappPut({
+    appointmentId:String(appointmentId),
+    phone:$("whatsappPhone").value.trim(),
+    template:$("whatsappTemplate").value,
+    status:$("whatsappStatus").value,
+    message:$("whatsappMessage").value,
+    updatedAt:new Date().toISOString(),
+    sentAt:$("whatsappStatus").value==="Mensaje enviado"?new Date().toISOString():null
+  });
+  await renderWhatsAppPage();
+  toast("Estado de WhatsApp guardado.");
+}
+async function copyWhatsAppMessage(){
+  const text=$("whatsappMessage").value;
+  try{
+    await navigator.clipboard.writeText(text);
+    toast("Mensaje copiado.");
+  }catch{
+    $("whatsappMessage").select();
+    document.execCommand("copy");
+    toast("Mensaje copiado.");
+  }
+}
+async function openWhatsAppMessage(e){
+  e.preventDefault();
+  const phone=cleanWhatsAppPhone($("whatsappPhone").value);
+  const message=$("whatsappMessage").value.trim();
+  if(!phone){toast("Agrega el teléfono de la clienta.",true);return}
+  if(!message){toast("Escribe un mensaje.",true);return}
+  $("whatsappStatus").value="Mensaje enviado";
+  await saveWhatsAppStatus();
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`,"_blank","noopener");
+}
+function isSameDate(a,b){return dateKey(a)===dateKey(b)}
+async function renderWhatsAppPage(){
+  if(!$("whatsappAppointments"))return;
+  const filter=$("whatsappFilter")?.value||"upcoming";
+  const query=String($("whatsappSearch")?.value||"").trim().toLowerCase();
+  const todayDate=new Date();
+  const todayKey=localISO(todayDate);
+  const tomorrowKey=localISO(addDays(todayDate,1));
+  let citas=[...state.citas];
+
+  if(filter==="today")citas=citas.filter(c=>dateKey(c.Fecha)===todayKey);
+  else if(filter==="tomorrow")citas=citas.filter(c=>dateKey(c.Fecha)===tomorrowKey);
+  else if(filter==="upcoming")citas=citas.filter(c=>dateKey(c.Fecha)>=todayKey && !["cancelada","completada"].includes(String(c.Estado||"").toLowerCase()));
+  else if(filter==="unconfirmed"){
+    const temp=[];
+    for(const c of citas){
+      const saved=await whatsappGet(c.ID);
+      if(!saved || ["Pendiente","Mensaje enviado"].includes(saved.status))temp.push(c);
+    }
+    citas=temp;
+  }
+  if(query)citas=citas.filter(c=>{
+    const client=appointmentClient(c);
+    return [c.ClientaNombre,client.Telefono,c.Servicio,c.Empleada].some(v=>String(v||"").toLowerCase().includes(query));
+  });
+  citas.sort((a,b)=>`${dateKey(a.Fecha)} ${normalizeTime(a.HoraInicio)}`.localeCompare(`${dateKey(b.Fecha)} ${normalizeTime(b.HoraInicio)}`));
+
+  const rows=[];
+  let pending=0,confirmed=0,sent=0;
+  for(const c of citas){
+    const saved=await whatsappGet(c.ID);
+    const client=appointmentClient(c);
+    const status=saved?.status||"Pendiente";
+    if(status==="Confirmada")confirmed++;
+    else if(status==="Mensaje enviado")sent++;
+    else if(status==="Pendiente")pending++;
+    rows.push({c,client,saved,status});
+  }
+
+  $("whatsappStats").innerHTML=[
+    ["Citas mostradas",String(rows.length),"Según el filtro actual"],
+    ["Pendientes",String(pending),"Sin confirmación"],
+    ["Mensajes enviados",String(sent),"Esperando respuesta"],
+    ["Confirmadas",String(confirmed),"Asistencia confirmada"]
+  ].map(([label,value,sub])=>`<article class="stat-card-pro"><span>${label}</span><strong>${value}</strong><small>${sub}</small></article>`).join("");
+
+  $("whatsappAppointments").innerHTML=rows.length?rows.map(({c,client,saved,status})=>`
+    <article class="whatsapp-row">
+      <div class="whatsapp-date">
+        <strong>${formatDay(parseLocalDate(c.Fecha),{day:"2-digit"})}</strong>
+        <span>${formatDay(parseLocalDate(c.Fecha),{month:"short"})}</span>
+      </div>
+      <div class="whatsapp-client">
+        <strong>${esc(c.ClientaNombre||client.Nombre||"Clienta")}</strong>
+        <small>${esc(client.Telefono||saved?.phone||"Sin teléfono")}</small>
+      </div>
+      <div class="whatsapp-service">
+        <strong>${esc(c.Servicio||"Servicio")}</strong>
+        <small>${esc(displayTime(c.HoraInicio))} · ${esc(c.Empleada||"Sin asignar")}</small>
+      </div>
+      <span class="whatsapp-status ${slug(status)}">${esc(status)}</span>
+      <div class="whatsapp-last">
+        <small>${saved?.updatedAt?`Actualizado ${new Date(saved.updatedAt).toLocaleString("es-MX")}`:"Sin mensajes registrados"}</small>
+      </div>
+      <button class="whatsapp-action" onclick='openWhatsAppDialog(${JSON.stringify(c.ID)})'>Enviar mensaje</button>
+    </article>`).join(""):`<div class="empty">No hay citas que coincidan con el filtro.</div>`;
 }

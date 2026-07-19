@@ -236,3 +236,41 @@ body.dark .loyalty-progress{background:#422a35}
   .loyalty-profile-card{grid-template-columns:48px 1fr}
   .loyalty-profile-actions{grid-column:2;text-align:left}
 }
+
+/* ArtBeauty 3.5 - WhatsApp y confirmaciones */
+.whatsapp-heading{align-items:flex-end}
+.whatsapp-note{max-width:330px;padding:12px 15px;border-radius:14px;background:#e9f8ef;border:1px solid #bde7cc}
+.whatsapp-note strong,.whatsapp-note span{display:block}.whatsapp-note strong{color:#197a48}.whatsapp-note span{font-size:10px;color:#4f6c5c;margin-top:3px}
+.whatsapp-stats{grid-template-columns:repeat(4,1fr);margin-bottom:16px}
+.whatsapp-panel{padding:18px}
+.whatsapp-filters{display:flex;gap:10px;align-items:flex-end}.whatsapp-filters label{display:grid;gap:4px;font-size:10px;color:var(--muted);font-weight:800}.whatsapp-filters input{min-width:210px}
+.whatsapp-appointments{display:grid;gap:8px}
+.whatsapp-row{display:grid;grid-template-columns:55px minmax(140px,1fr) minmax(170px,1.2fr) 125px minmax(150px,1fr) auto;gap:12px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:15px;background:var(--card)}
+.whatsapp-date{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;align-content:center;background:#e9f8ef;color:#187948}.whatsapp-date strong,.whatsapp-date span{display:block;line-height:1}.whatsapp-date span{font-size:9px;text-transform:uppercase;margin-top:4px}
+.whatsapp-client strong,.whatsapp-client small,.whatsapp-service strong,.whatsapp-service small{display:block}.whatsapp-client small,.whatsapp-service small,.whatsapp-last small{font-size:10px;color:var(--muted);margin-top:3px}
+.whatsapp-status{justify-self:start;padding:6px 9px;border-radius:999px;font-size:10px;font-weight:900;background:#f0e9ed;color:#725b66}
+.whatsapp-status.confirmada{background:#daf3e5;color:#157349}.whatsapp-status.mensaje-enviado{background:#dff0fa;color:#236b91}.whatsapp-status.cancelada{background:#f8dfe3;color:#a92c43}.whatsapp-status.reprogramada{background:#fff0c9;color:#806313}
+.whatsapp-action,.whatsapp-open-btn,.whatsapp-mini-btn{background:#1fa463;color:#fff}
+.whatsapp-action{padding:9px 11px;border-radius:10px;font-weight:900;font-size:10px}
+.whatsapp-mini-btn{padding:7px 9px;border-radius:9px;font-size:9px;font-weight:900}
+.whatsapp-dialog{width:min(760px,96vw);max-height:94vh;border:0;border-radius:22px;padding:0;background:var(--card);color:var(--text)}
+.whatsapp-dialog::backdrop{background:rgba(14,25,19,.78);backdrop-filter:blur(6px)}
+.whatsapp-form header,.whatsapp-form footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.whatsapp-form .form-grid{padding:20px}.whatsapp-form footer{justify-content:flex-end;border-top:1px solid var(--line);border-bottom:0;flex-wrap:wrap}
+#whatsappMessage{font-family:inherit;line-height:1.5}
+body.dark .whatsapp-note{background:#173426;border-color:#28563d}.dark .whatsapp-note strong{color:#61d594}.dark .whatsapp-note span{color:#a6c8b3}
+body.dark .whatsapp-date{background:#173426;color:#65d899}
+@media(max-width:1100px){
+  .whatsapp-row{grid-template-columns:55px 1fr 1fr 120px auto}
+  .whatsapp-last{display:none}
+}
+@media(max-width:760px){
+  .whatsapp-heading{align-items:stretch}.whatsapp-note{max-width:none}
+  .whatsapp-stats{grid-template-columns:1fr 1fr}
+  .panel-title{flex-direction:column}.whatsapp-filters{width:100%;flex-direction:column;align-items:stretch}.whatsapp-filters input{min-width:0;width:100%}
+  .whatsapp-row{grid-template-columns:50px 1fr auto}.whatsapp-service{grid-column:2}.whatsapp-status{grid-column:2}.whatsapp-action{grid-column:3;grid-row:1/4}
+}
+@media(max-width:460px){
+  .whatsapp-stats{grid-template-columns:1fr}
+  .whatsapp-form footer>*{width:100%}
+}

@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#9f1d59">
-  <title>ArtBeauty V3.4 · Programa de Puntos VIP</title>
-  <link rel="stylesheet" href="styles.css?v=3.4.0">
+  <title>ArtBeauty V3.5 · WhatsApp y Confirmaciones</title>
+  <link rel="stylesheet" href="styles.css?v=3.5.0">
 </head>
 <body>
 <div id="toast" class="toast"></div>
@@ -217,11 +217,52 @@
       </section>
     </section>
 
+
+    <section id="mensajes" class="page">
+      <div class="page-actions whatsapp-heading">
+        <div>
+          <span class="version-chip">WHATSAPP V3.5</span>
+          <h3>Confirmaciones y recordatorios</h3>
+          <p>Prepara mensajes personalizados y abre WhatsApp con un solo toque.</p>
+        </div>
+        <div class="whatsapp-note">
+          <strong>Sin costo de API</strong>
+          <span>La aplicación prepara el mensaje; tú confirmas el envío en WhatsApp.</span>
+        </div>
+      </div>
+
+      <div id="whatsappStats" class="stats-grid whatsapp-stats"></div>
+
+      <section class="panel whatsapp-panel">
+        <div class="panel-title">
+          <div>
+            <h4>Citas para contactar</h4>
+            <p>Confirmaciones, recordatorios y seguimiento.</p>
+          </div>
+          <div class="whatsapp-filters">
+            <label>Vista
+              <select id="whatsappFilter">
+                <option value="upcoming">Próximas citas</option>
+                <option value="today">Citas de hoy</option>
+                <option value="tomorrow">Citas de mañana</option>
+                <option value="unconfirmed">Sin confirmar</option>
+                <option value="all">Todas</option>
+              </select>
+            </label>
+            <label>Buscar
+              <input id="whatsappSearch" placeholder="Clienta, teléfono o servicio">
+            </label>
+          </div>
+        </div>
+        <div id="whatsappAppointments" class="whatsapp-appointments"></div>
+      </section>
+    </section>
+
 </main>
 </div>
 
 <dialog id="modal"><form id="modalForm"><div class="modal-head"><h3 id="modalTitle"></h3><button type="button" id="modalClose" class="icon-btn">✕</button></div><div id="modalBody" class="modal-body"></div><div class="modal-actions"><button type="button" id="modalCancel" class="secondary">Cancelar</button><button type="submit" id="modalSave" class="primary">Guardar</button></div></form></dialog>
-<script src="app.js?v=3.4.0"></script>
+<script src="app.js?v=3.5.0"></script>
 
   <dialog id="clientProfileDialog" class="client-profile-dialog">
     <div class="client-profile-shell">
@@ -333,6 +374,55 @@
       <section id="loyaltyRewardsPanel" class="loyalty-panel">
         <div id="loyaltyRewardsList" class="loyalty-rewards-list"></div>
       </section>
+    </form>
+  </dialog>
+
+
+  <dialog id="whatsappDialog" class="whatsapp-dialog">
+    <form id="whatsappForm" class="whatsapp-form">
+      <header>
+        <div>
+          <span class="eyebrow">MENSAJE POR WHATSAPP</span>
+          <h3 id="whatsappDialogTitle">Preparar mensaje</h3>
+        </div>
+        <button type="button" id="whatsappClose" class="icon-btn">×</button>
+      </header>
+
+      <input type="hidden" id="whatsappAppointmentId">
+
+      <div class="form-grid">
+        <label>Tipo de mensaje
+          <select id="whatsappTemplate">
+            <option value="confirmation">Confirmación de cita</option>
+            <option value="dayBefore">Recordatorio un día antes</option>
+            <option value="sameDay">Recordatorio del mismo día</option>
+            <option value="thanks">Agradecimiento después de la cita</option>
+            <option value="return">Invitación para regresar</option>
+            <option value="custom">Mensaje personalizado</option>
+          </select>
+        </label>
+        <label>Estado de confirmación
+          <select id="whatsappStatus">
+            <option value="Pendiente">Pendiente</option>
+            <option value="Mensaje enviado">Mensaje enviado</option>
+            <option value="Confirmada">Confirmada</option>
+            <option value="Reprogramada">Reprogramada</option>
+            <option value="Cancelada">Cancelada</option>
+          </select>
+        </label>
+        <label class="full">Teléfono
+          <input id="whatsappPhone" inputmode="tel" placeholder="Ej. 9095551234">
+        </label>
+        <label class="full">Mensaje
+          <textarea id="whatsappMessage" rows="8"></textarea>
+        </label>
+      </div>
+
+      <footer>
+        <button type="button" id="whatsappCopy" class="secondary">Copiar mensaje</button>
+        <button type="button" id="whatsappSave" class="secondary">Guardar estado</button>
+        <button type="submit" class="primary whatsapp-open-btn">Abrir WhatsApp</button>
+      </footer>
     </form>
   </dialog>
 
