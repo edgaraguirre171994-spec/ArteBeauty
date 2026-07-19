@@ -1,4 +1,4 @@
-console.info("ArtBeauty V5.1 Horarios configurables cargado correctamente");
+console.info("ArtBeauty V6 Horarios desde la aplicación cargado correctamente");
 const API_URL = "https://script.google.com/macros/s/AKfycbyNdSbHFgVadu08GVDlNQT5Dqat97l8pi33nVlkDBcBv1o-unYV8Gewq4Fi2NdK7ywNGw/exec";
 const state = { user:null, dashboard:null, citas:[], clientas:[], servicios:[], pagos:[], configuracion:{}, inventory:[], expenses:[], employees:[], portalRequests:[], users:[], portalData:null, portalAvailability:[], portalCalendarStart:null, calendarView:"week", calendarDate:new Date() };
 const $ = id => document.getElementById(id);
@@ -192,6 +192,13 @@ function bindEvents(){
 
   on("themeSelect","change",e=>applyTheme(e.target.value));
   click("saveSettingsBtn",saveSettings);
+  click("restoreDefaultHoursBtn",restoreDefaultBusinessHours);
+  document.querySelectorAll("[id^='hoursOpen']").forEach(input=>{
+    input.addEventListener("change",()=>updateBusinessHoursControls(input.id.replace("hoursOpen","")));
+  });
+  document.querySelectorAll("[id^='hoursStart'],[id^='hoursEnd']").forEach(input=>{
+    input.addEventListener("change",()=>updateBusinessHoursSummary(input.id.replace(/^hours(?:Start|End)/,"")));
+  });
 
   // Cerrar con Escape o tocando fuera de la ventana.
   document.querySelectorAll("dialog").forEach(dialog=>{
@@ -653,7 +660,102 @@ function renderPayments(){
   $("paymentsTable").innerHTML=state.pagos.length?`<table><thead><tr><th>Fecha</th><th>Cita</th><th>Total</th><th>Depósito</th><th>Saldo</th><th>Propina</th><th>Método</th></tr></thead><tbody>${state.pagos.map(p=>`<tr><td>${esc(String(p.Fecha).slice(0,10))}</td><td>${esc(p.CitaID||"—")}</td><td>${money(p.Total)}</td><td>${money(p.Deposito)}</td><td>${money(p.Saldo)}</td><td>${money(p.Propina)}</td><td>${esc(p.MetodoPago)}</td></tr>`).join("")}</tbody></table>`:'<div class="empty">No hay pagos registrados.</div>';
 }
 function renderReception(){const items=state.citas.filter(c=>String(c.Fecha).slice(0,10)===today());$("receptionAppointments").innerHTML=listAppointments(items)}
-function renderSettings(){const c=state.configuracion;$("businessName").value=c.NEGOCIO_NOMBRE||"ArtBeauty";$("businessPhone").value=c.TELEFONO||"";$("businessInstagram").value=c.INSTAGRAM||"@artbeauty.queen";$("businessAddress").value=c.DIRECCION||""}
+const BUSINESS_DAYS=[
+  {key:"LUNES",label:"Lunes",open:true,start:"19:00",end:"22:00"},
+  {key:"MARTES",label:"Martes",open:true,start:"19:00",end:"22:00"},
+  {key:"MIERCOLES",label:"Miércoles",open:true,start:"07:00",end:"19:00"},
+  {key:"JUEVES",label:"Jueves",open:true,start:"19:00",end:"22:00"},
+  {key:"VIERNES",label:"Viernes",open:true,start:"19:00",end:"22:00"},
+  {key:"SABADO",label:"Sábado",open:true,start:"19:00",end:"22:00"},
+  {key:"DOMINGO",label:"Domingo",open:false,start:"",end:""}
+];
+
+function configBool(value,fallback=false){
+  if(value===undefined||value===null||value==="")return fallback;
+  return ["TRUE","1","SI","SÍ","YES"].includes(String(value).trim().toUpperCase());
+}
+
+function normalizeConfigTime(value,fallback=""){
+  return normalizeTime(value)||fallback;
+}
+
+function renderSettings(){
+  const c=state.configuracion||{};
+  $("businessName").value=c.NEGOCIO_NOMBRE||"ArtBeauty";
+  $("businessPhone").value=c.TELEFONO||"";
+  $("businessInstagram").value=c.INSTAGRAM||"@artbeauty.queen";
+  $("businessAddress").value=c.DIRECCION||"";
+  if($("appointmentBuffer"))$("appointmentBuffer").value=String(c.BUFFER_MINUTOS??"10");
+
+  BUSINESS_DAYS.forEach(day=>{
+    const open=$("hoursOpen"+day.key);
+    const start=$("hoursStart"+day.key);
+    const end=$("hoursEnd"+day.key);
+    if(!open||!start||!end)return;
+
+    open.checked=configBool(c[`HORARIO_${day.key}_ABIERTO`],day.open);
+    start.value=normalizeConfigTime(c[`HORARIO_${day.key}_INICIO`],day.start);
+    end.value=normalizeConfigTime(c[`HORARIO_${day.key}_FIN`],day.end);
+    updateBusinessHoursControls(day.key);
+  });
+
+  showHoursValidation("");
+}
+
+function updateBusinessHoursControls(dayKey){
+  const open=$("hoursOpen"+dayKey);
+  const start=$("hoursStart"+dayKey);
+  const end=$("hoursEnd"+dayKey);
+  if(!open||!start||!end)return;
+  start.disabled=!open.checked;
+  end.disabled=!open.checked;
+  const row=open.closest(".business-day-row");
+  row?.classList.toggle("closed",!open.checked);
+  updateBusinessHoursSummary(dayKey);
+}
+
+function updateBusinessHoursSummary(dayKey){
+  const open=$("hoursOpen"+dayKey);
+  const start=$("hoursStart"+dayKey);
+  const end=$("hoursEnd"+dayKey);
+  const summary=$("hoursSummary"+dayKey);
+  if(!open||!start||!end||!summary)return;
+  summary.textContent=!open.checked
+    ?"Cerrado"
+    :(start.value&&end.value?`${displayTime(start.value)} – ${displayTime(end.value)}`:"Completa el horario");
+}
+
+function restoreDefaultBusinessHours(){
+  BUSINESS_DAYS.forEach(day=>{
+    $("hoursOpen"+day.key).checked=day.open;
+    $("hoursStart"+day.key).value=day.start;
+    $("hoursEnd"+day.key).value=day.end;
+    updateBusinessHoursControls(day.key);
+  });
+  if($("appointmentBuffer"))$("appointmentBuffer").value="10";
+  showHoursValidation("Horario actual restaurado. Presiona Guardar configuración para aplicarlo.",false);
+}
+
+function showHoursValidation(message,isError=false){
+  const box=$("hoursValidationMessage");
+  if(!box)return;
+  box.textContent=message||"";
+  box.classList.toggle("hidden",!message);
+  box.classList.toggle("error",Boolean(isError));
+  box.classList.toggle("success",Boolean(message)&&!isError);
+}
+
+function validateBusinessHours(){
+  for(const day of BUSINESS_DAYS){
+    const open=$("hoursOpen"+day.key)?.checked;
+    const start=$("hoursStart"+day.key)?.value||"";
+    const end=$("hoursEnd"+day.key)?.value||"";
+    if(!open)continue;
+    if(!start||!end)return `${day.label}: selecciona la hora de inicio y de cierre.`;
+    if(start>=end)return `${day.label}: la hora de cierre debe ser posterior a la hora de inicio.`;
+  }
+  return "";
+}
 function renderAIRecommendations(){const d=state.dashboard||{};$("aiRecommendations").innerHTML=`<div class="list-item"><div><strong>${d.citasPendientes||0} citas pendientes</strong><small>Revisa confirmaciones.</small></div></div><div class="list-item"><div><strong>${money(d.gananciaEstimada)}</strong><small>Ganancia estimada registrada.</small></div></div>`}
 
 function safeCloseDialog(id){
@@ -716,8 +818,59 @@ async function saveModal(e){
 }
 
 async function saveSettings(){
-  const pairs=[["NEGOCIO_NOMBRE",$("businessName").value],["TELEFONO",$("businessPhone").value],["INSTAGRAM",$("businessInstagram").value],["DIRECCION",$("businessAddress").value]];
-  loading(true);try{for(const [Clave,Valor] of pairs)await api("saveConfiguracion",{Clave,Valor,usuarioActual:state.user.Nombre});toast("Configuración guardada");await loadAll()}catch(err){toast(err.message,true)}finally{loading(false)}
+  const validation=validateBusinessHours();
+  if(validation){
+    showHoursValidation(validation,true);
+    toast(validation,true);
+    return;
+  }
+
+  const pairs=[
+    ["NEGOCIO_NOMBRE",$("businessName").value.trim()],
+    ["TELEFONO",$("businessPhone").value.trim()],
+    ["INSTAGRAM",$("businessInstagram").value.trim()],
+    ["DIRECCION",$("businessAddress").value.trim()],
+    ["BUFFER_MINUTOS",$("appointmentBuffer")?.value||"10"]
+  ];
+
+  BUSINESS_DAYS.forEach(day=>{
+    const isOpen=$("hoursOpen"+day.key).checked;
+    pairs.push([`HORARIO_${day.key}_ABIERTO`,isOpen?"TRUE":"FALSE"]);
+    pairs.push([`HORARIO_${day.key}_INICIO`,isOpen?$("hoursStart"+day.key).value:""]);
+    pairs.push([`HORARIO_${day.key}_FIN`,isOpen?$("hoursEnd"+day.key).value:""]);
+  });
+
+  loading(true);
+  showHoursValidation("");
+  try{
+    const payload={
+      valores:Object.fromEntries(pairs),
+      usuarioActual:state.user?.Nombre||"Administrador"
+    };
+
+    try{
+      await api("saveConfiguracionBatch",payload);
+    }catch(batchError){
+      console.warn("Guardado por lote no disponible; usando guardado individual.",batchError);
+      for(const [Clave,Valor] of pairs){
+        await api("saveConfiguracion",{
+          Clave,
+          Valor,
+          usuarioActual:state.user?.Nombre||"Administrador"
+        });
+      }
+    }
+
+    pairs.forEach(([key,value])=>state.configuracion[key]=value);
+    showHoursValidation("Horario y configuración guardados correctamente.",false);
+    toast("Configuración y horarios guardados");
+    renderSettings();
+  }catch(err){
+    showHoursValidation(err.message,true);
+    toast(err.message,true);
+  }finally{
+    loading(false);
+  }
 }
 function applyTheme(theme){localStorage.setItem("ab_theme",theme);const dark=theme==="dark"||(theme==="system"&&matchMedia("(prefers-color-scheme:dark)").matches);document.body.classList.toggle("dark",dark);if($("themeSelect"))$("themeSelect").value=theme}
 function sendAI(){

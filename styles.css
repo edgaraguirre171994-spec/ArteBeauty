@@ -501,3 +501,32 @@ body.dark .calendar-mini.edit{background:#3c2932;color:#f2dce6}
   .next-available-grid{grid-template-columns:1fr 1fr}
   .time-option{flex:1 0 calc(33.333% - 10px);text-align:center}
 }
+
+
+/* ===== ArtBeauty V6 · Horarios desde la aplicación ===== */
+.business-hours-panel{margin-top:18px}
+.business-hours-heading{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}
+.business-hours-heading h4{font-size:22px;margin:4px 0 5px}
+.business-hours-grid{display:grid;gap:10px}
+.business-day-row{display:grid;grid-template-columns:minmax(145px,1fr) 115px minmax(145px,.75fr) minmax(145px,.75fr);gap:14px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--card);transition:.2s ease}
+.business-day-row.closed{background:rgba(128,111,120,.055);opacity:.75}
+.business-day-row label{margin:0}
+.business-day-name{display:grid;gap:3px}
+.business-day-name strong{font-size:16px}
+.business-day-name small{color:var(--muted);font-weight:700}
+.switch-label{display:flex!important;align-items:center;gap:9px;cursor:pointer}
+.switch-label input{width:20px;height:20px;accent-color:var(--brand)}
+.form-message{margin-top:14px;padding:12px 14px;border-radius:13px;font-weight:800}
+.form-message.success{background:#eaf8f0;color:var(--success);border:1px solid #bde4cd}
+.form-message.error{background:#fff0f1;color:var(--danger);border:1px solid #efc2c8}
+@media(max-width:850px){
+  .business-hours-heading{display:grid}
+  .business-day-row{grid-template-columns:1fr 110px 1fr 1fr}
+}
+@media(max-width:620px){
+  .business-day-row{grid-template-columns:1fr 110px}
+  .business-day-row>label:not(.switch-label){grid-column:span 1}
+  .business-day-name{grid-column:1}
+  .switch-label{grid-column:2}
+  .business-hours-heading .secondary{width:100%}
+}

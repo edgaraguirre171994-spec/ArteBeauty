@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#9f1d59">
-  <title>ArtBeauty V5.1 · Horarios configurables</title>
-  <link rel="stylesheet" href="styles.css?v=5.0">
+  <title>ArtBeauty V6 · Horarios desde la aplicación</title>
+  <link rel="stylesheet" href="styles.css?v=6.0">
 </head>
 <body>
 <div id="toast" class="toast"></div>
@@ -21,7 +21,7 @@
       </div>
     </div>
     <div class="login-card">
-      <span class="pill">V3 · Calendario profesional</span>
+      <span class="pill">V6 · Horarios administrables</span>
       <h2>Bienvenida</h2>
       <p>Inicia sesión para administrar citas, clientas, servicios y pagos.</p>
       <form id="loginForm">
@@ -392,11 +392,105 @@
     </section>
 
     <section id="settings" class="page">
-      <div class="page-actions"><div><h3>Configuración</h3><p>Información principal del negocio.</p></div><button id="saveSettingsBtn" class="primary admin-only">Guardar cambios</button></div>
-      <div class="settings-grid">
-        <article class="panel"><label>Nombre<input id="businessName"></label><label>Teléfono<input id="businessPhone"></label><label>Instagram<input id="businessInstagram"></label><label>Dirección<textarea id="businessAddress"></textarea></label></article>
-        <article class="panel"><label>Tema<select id="themeSelect"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático</option></select></label><p class="muted">Los cambios del negocio se guardan en la pestaña Configuracion.</p><div class="api-status"><b>Conexión</b><span id="apiStatus">Comprobando…</span></div></article>
+      <div class="page-actions">
+        <div>
+          <span class="version-chip">ARTBEAUTY V6</span>
+          <h3>Configuración</h3>
+          <p>Administra la información y los horarios del negocio desde la aplicación.</p>
+        </div>
+        <button id="saveSettingsBtn" class="primary admin-only">Guardar configuración</button>
       </div>
+
+      <div class="settings-grid">
+        <article class="panel">
+          <h4>Información del negocio</h4>
+          <label>Nombre<input id="businessName"></label>
+          <label>Teléfono<input id="businessPhone"></label>
+          <label>Instagram<input id="businessInstagram"></label>
+          <label>Dirección<textarea id="businessAddress"></textarea></label>
+        </article>
+
+        <article class="panel">
+          <h4>Apariencia y conexión</h4>
+          <label>Tema
+            <select id="themeSelect">
+              <option value="light">Claro</option>
+              <option value="dark">Oscuro</option>
+              <option value="system">Automático</option>
+            </select>
+          </label>
+          <label>Separación entre citas
+            <select id="appointmentBuffer">
+              <option value="0">Sin separación</option>
+              <option value="5">5 minutos</option>
+              <option value="10">10 minutos</option>
+              <option value="15">15 minutos</option>
+              <option value="20">20 minutos</option>
+              <option value="30">30 minutos</option>
+            </select>
+          </label>
+          <p class="muted">Los horarios guardados aquí se reflejan automáticamente en el calendario de clientas.</p>
+          <div class="api-status"><b>Conexión</b><span id="apiStatus">Comprobando…</span></div>
+        </article>
+      </div>
+
+      <article class="panel business-hours-panel admin-only">
+        <div class="business-hours-heading">
+          <div>
+            <span class="field-label">Horario semanal</span>
+            <h4>Días y horas de atención</h4>
+            <p class="muted">Activa o desactiva cada día y selecciona la hora de apertura y cierre.</p>
+          </div>
+          <button id="restoreDefaultHoursBtn" type="button" class="secondary">Restaurar horario actual</button>
+        </div>
+
+        <div id="businessHoursGrid" class="business-hours-grid">
+          <div class="business-day-row" data-day="LUNES">
+            <div class="business-day-name"><strong>Lunes</strong><small id="hoursSummaryLUNES"></small></div>
+            <label class="switch-label"><input id="hoursOpenLUNES" type="checkbox"><span>Abierto</span></label>
+            <label>Desde<input id="hoursStartLUNES" type="time" step="300"></label>
+            <label>Hasta<input id="hoursEndLUNES" type="time" step="300"></label>
+          </div>
+          <div class="business-day-row" data-day="MARTES">
+            <div class="business-day-name"><strong>Martes</strong><small id="hoursSummaryMARTES"></small></div>
+            <label class="switch-label"><input id="hoursOpenMARTES" type="checkbox"><span>Abierto</span></label>
+            <label>Desde<input id="hoursStartMARTES" type="time" step="300"></label>
+            <label>Hasta<input id="hoursEndMARTES" type="time" step="300"></label>
+          </div>
+          <div class="business-day-row" data-day="MIERCOLES">
+            <div class="business-day-name"><strong>Miércoles</strong><small id="hoursSummaryMIERCOLES"></small></div>
+            <label class="switch-label"><input id="hoursOpenMIERCOLES" type="checkbox"><span>Abierto</span></label>
+            <label>Desde<input id="hoursStartMIERCOLES" type="time" step="300"></label>
+            <label>Hasta<input id="hoursEndMIERCOLES" type="time" step="300"></label>
+          </div>
+          <div class="business-day-row" data-day="JUEVES">
+            <div class="business-day-name"><strong>Jueves</strong><small id="hoursSummaryJUEVES"></small></div>
+            <label class="switch-label"><input id="hoursOpenJUEVES" type="checkbox"><span>Abierto</span></label>
+            <label>Desde<input id="hoursStartJUEVES" type="time" step="300"></label>
+            <label>Hasta<input id="hoursEndJUEVES" type="time" step="300"></label>
+          </div>
+          <div class="business-day-row" data-day="VIERNES">
+            <div class="business-day-name"><strong>Viernes</strong><small id="hoursSummaryVIERNES"></small></div>
+            <label class="switch-label"><input id="hoursOpenVIERNES" type="checkbox"><span>Abierto</span></label>
+            <label>Desde<input id="hoursStartVIERNES" type="time" step="300"></label>
+            <label>Hasta<input id="hoursEndVIERNES" type="time" step="300"></label>
+          </div>
+          <div class="business-day-row" data-day="SABADO">
+            <div class="business-day-name"><strong>Sábado</strong><small id="hoursSummarySABADO"></small></div>
+            <label class="switch-label"><input id="hoursOpenSABADO" type="checkbox"><span>Abierto</span></label>
+            <label>Desde<input id="hoursStartSABADO" type="time" step="300"></label>
+            <label>Hasta<input id="hoursEndSABADO" type="time" step="300"></label>
+          </div>
+          <div class="business-day-row" data-day="DOMINGO">
+            <div class="business-day-name"><strong>Domingo</strong><small id="hoursSummaryDOMINGO"></small></div>
+            <label class="switch-label"><input id="hoursOpenDOMINGO" type="checkbox"><span>Abierto</span></label>
+            <label>Desde<input id="hoursStartDOMINGO" type="time" step="300"></label>
+            <label>Hasta<input id="hoursEndDOMINGO" type="time" step="300"></label>
+          </div>
+        </div>
+
+        <div id="hoursValidationMessage" class="form-message hidden"></div>
+      </article>
     </section>
   
     <section id="lealtad" class="page">
@@ -473,7 +567,7 @@
 </div>
 
 <dialog id="modal"><form id="modalForm"><div class="modal-head"><h3 id="modalTitle"></h3><button type="button" id="modalClose" class="icon-btn">✕</button></div><div id="modalBody" class="modal-body"></div><div class="modal-actions"><button type="button" id="modalCancel" class="secondary">Cancelar</button><button type="submit" id="modalSave" class="primary">Guardar</button></div></form></dialog>
-<script src="app.js?v=5.0"></script>
+<script src="app.js?v=6.0"></script>
 
   <dialog id="clientProfileDialog" class="client-profile-dialog">
     <div class="client-profile-shell">
