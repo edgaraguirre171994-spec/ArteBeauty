@@ -15,3 +15,16 @@
 .day-calendar{min-width:700px}.hour-row{display:grid;grid-template-columns:85px 1fr;min-height:72px;border-bottom:1px solid var(--line)}.hour-row>time{padding:10px;color:var(--muted);font-size:11px;text-align:right;border-right:1px solid var(--line)}.hour-row>div{padding:6px;display:grid;gap:5px}.hour-row:hover{background:#fff8fb}
 body.dark .calendar-weekday{background:#2b1922}body.dark .calendar-day:hover,body.dark .week-day:hover,body.dark .hour-row:hover{background:#2e1924}body.dark .calendar-day.today,body.dark .week-day.today{background:#38202c}
 @media(max-width:760px){.calendar-toolbar{align-items:stretch;flex-direction:column}.calendar-navigation{flex-wrap:wrap}.calendar-navigation strong{min-width:0;flex:1}.calendar-views{overflow:auto}.calendar-view-btn{white-space:nowrap}.calendar-help{display:none}}
+
+.version-chip{
+  display:inline-flex;
+  align-items:center;
+  margin-bottom:7px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:linear-gradient(135deg,var(--brand),#d54d8c);
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.08em;
+}

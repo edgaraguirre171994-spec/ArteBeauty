@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#9f1d59">
-  <title>ArtBeauty V2</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>ArtBeauty V3 · Calendario Profesional</title>
+  <link rel="stylesheet" href="styles.css?v=3.0.1">
 </head>
 <body>
 <div id="toast" class="toast"></div>
@@ -21,7 +21,7 @@
       </div>
     </div>
     <div class="login-card">
-      <span class="pill">V2 · Datos sincronizados</span>
+      <span class="pill">V3 · Calendario profesional</span>
       <h2>Bienvenida</h2>
       <p>Inicia sesión para administrar citas, clientas, servicios y pagos.</p>
       <form id="loginForm">
@@ -76,7 +76,7 @@
     </section>
 
     <section id="calendar" class="page">
-      <div class="page-actions"><div><h3>Agenda profesional</h3><p>Vista diaria, semanal y mensual. Puedes mover citas entre días.</p></div><button id="newAppointmentBtn" class="primary">+ Nueva cita</button></div>
+      <div class="page-actions"><div><span class="version-chip">ARTBEAUTY V3</span><h3>Agenda profesional</h3><p>Vista diaria, semanal y mensual. Puedes mover citas entre días.</p></div><button id="newAppointmentBtn" class="primary">+ Nueva cita</button></div>
 
       <div class="calendar-toolbar panel">
         <div class="calendar-navigation">
@@ -150,6 +150,6 @@
 </div>
 
 <dialog id="modal"><form id="modalForm"><div class="modal-head"><h3 id="modalTitle"></h3><button type="button" id="modalClose" class="icon-btn">✕</button></div><div id="modalBody" class="modal-body"></div><div class="modal-actions"><button type="button" id="modalCancel" class="secondary">Cancelar</button><button type="submit" id="modalSave" class="primary">Guardar</button></div></form></dialog>
-<script src="app.js"></script>
+<script src="app.js?v=3.0.1"></script>
 </body>
 </html>

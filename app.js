@@ -1,3 +1,4 @@
+console.info("ArtBeauty V3.0.1 cargado correctamente");
 const API_URL = "https://script.google.com/macros/s/AKfycbyNdSbHFgVadu08GVDlNQT5Dqat97l8pi33nVlkDBcBv1o-unYV8Gewq4Fi2NdK7ywNGw/exec";
 const state = { user:null, dashboard:null, citas:[], clientas:[], servicios:[], pagos:[], configuracion:{}, calendarView:"week", calendarDate:new Date() };
 const $ = id => document.getElementById(id);
@@ -5,6 +6,39 @@ const money = n => new Intl.NumberFormat("en-US",{style:"currency",currency:"USD
 const today = () => new Date().toISOString().slice(0,10);
 const esc = v => String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 const slug = v => String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-");
+const normalizeTime = value => {
+  if (value === null || value === undefined || value === "") return "";
+  const s = String(value).trim();
+
+  // Normal HH:mm or HH:mm:ss
+  const plain = s.match(/(?:^|\s)(\d{1,2}):(\d{2})(?::\d{2})?(?:\s|$)/);
+  if (plain && !s.includes("1899-12-30")) {
+    return `${String(Number(plain[1])).padStart(2,"0")}:${plain[2]}`;
+  }
+
+  // Google Sheets can return time-only cells as 1899-12-30T09:00:00...
+  const sheetTime = s.match(/1899-12-30(?:T|\s)(\d{1,2}):(\d{2})/);
+  if (sheetTime) return `${String(Number(sheetTime[1])).padStart(2,"0")}:${sheetTime[2]}`;
+
+  // ISO date containing a time
+  const iso = s.match(/T(\d{1,2}):(\d{2})/);
+  if (iso) return `${String(Number(iso[1])).padStart(2,"0")}:${iso[2]}`;
+
+  // Decimal fraction of a day (Sheets serial time)
+  const n = Number(value);
+  if (Number.isFinite(n) && n >= 0 && n < 1) {
+    const totalMinutes = Math.round(n * 24 * 60);
+    return `${String(Math.floor(totalMinutes / 60) % 24).padStart(2,"0")}:${String(totalMinutes % 60).padStart(2,"0")}`;
+  }
+  return s.slice(-8, -3);
+};
+const displayTime = value => {
+  const t = normalizeTime(value);
+  if (!t) return "";
+  const [h,m] = t.split(":").map(Number);
+  const suffix = h >= 12 ? "PM" : "AM";
+  return `${h % 12 || 12}:${String(m).padStart(2,"0")} ${suffix}`;
+};
 
 function toast(message,error=false){const t=$("toast");t.textContent=message;t.className="toast show"+(error?" error":"");clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.className="toast",3200)}
 function loading(on){$("loading").classList.toggle("hidden",!on)}
@@ -91,7 +125,7 @@ function renderDashboard(){
 }
 function listAppointments(items){
   if(!items.length)return '<div class="empty">No hay citas para mostrar.</div>';
-  return items.map(c=>`<div class="list-item"><div><strong>${esc(c.ClientaNombre)}</strong><small>${esc(c.HoraInicio)} · ${esc(c.Servicio)}</small></div><span class="badge ${slug(c.Estado)}">${esc(c.Estado)}</span></div>`).join("");
+  return items.map(c=>`<div class="list-item"><div><strong>${esc(c.ClientaNombre)}</strong><small>${esc(displayTime(c.HoraInicio))} · ${esc(c.Servicio)}</small></div><span class="badge ${slug(c.Estado)}">${esc(c.Estado)}</span></div>`).join("");
 }
 function renderAppointments(){
   let items=filteredAppointments();
@@ -112,7 +146,7 @@ function filteredAppointments(){
   return items;
 }
 function renderAppointmentTable(items){
-  $("appointmentsTable").innerHTML=items.length?`<table><thead><tr><th>Fecha</th><th>Hora</th><th>Clienta</th><th>Servicio</th><th>Estado</th><th>Total</th><th>Acciones</th></tr></thead><tbody>${items.map(c=>`<tr><td>${esc(dateKey(c.Fecha))}</td><td>${esc(c.HoraInicio)}–${esc(c.HoraFin)}</td><td><b>${esc(c.ClientaNombre)}</b></td><td>${esc(c.Servicio)}</td><td><span class="badge ${slug(c.Estado)}">${esc(c.Estado)}</span></td><td>${money(c.Total)}</td><td><button class="small-btn" onclick='editAppointment(${JSON.stringify(c.ID)})'>Editar</button></td></tr>`).join("")}</tbody></table>`:'<div class="empty">No hay citas registradas.</div>';
+  $("appointmentsTable").innerHTML=items.length?`<table><thead><tr><th>Fecha</th><th>Hora</th><th>Clienta</th><th>Servicio</th><th>Estado</th><th>Total</th><th>Acciones</th></tr></thead><tbody>${items.map(c=>`<tr><td>${esc(dateKey(c.Fecha))}</td><td>${esc(displayTime(c.HoraInicio))}–${esc(displayTime(c.HoraFin))}</td><td><b>${esc(c.ClientaNombre)}</b></td><td>${esc(c.Servicio)}</td><td><span class="badge ${slug(c.Estado)}">${esc(c.Estado)}</span></td><td>${money(c.Total)}</td><td><button class="small-btn" onclick='editAppointment(${JSON.stringify(c.ID)})'>Editar</button></td></tr>`).join("")}</tbody></table>`:'<div class="empty">No hay citas registradas.</div>';
 }
 function dateKey(value){
   if(!value)return "";
@@ -142,12 +176,12 @@ function moveCalendar(direction){
 }
 function appointmentCard(c){
   return `<article class="calendar-event status-${slug(c.Estado)}" draggable="true" data-id="${esc(c.ID)}" onclick='editAppointment(${JSON.stringify(c.ID)})' ondragstart="calendarDragStart(event)">
-    <strong>${esc(c.HoraInicio||"")} ${esc(c.ClientaNombre||"")}</strong>
+    <strong>${esc(displayTime(c.HoraInicio))} ${esc(c.ClientaNombre||"")}</strong>
     <span>${esc(c.Servicio||"")}</span>
     <small>${esc(c.Empleada||"")} · ${esc(c.Estado||"")}</small>
   </article>`;
 }
-function dayEvents(items,d){return items.filter(c=>dateKey(c.Fecha)===localISO(d)).sort((a,b)=>String(a.HoraInicio).localeCompare(String(b.HoraInicio)))}
+function dayEvents(items,d){return items.filter(c=>dateKey(c.Fecha)===localISO(d)).sort((a,b)=>normalizeTime(a.HoraInicio).localeCompare(normalizeTime(b.HoraInicio)))}
 function renderMonthCalendar(items){
   const base=new Date(state.calendarDate.getFullYear(),state.calendarDate.getMonth(),1),first=startOfWeek(base);
   const heads=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map(x=>`<div class="calendar-weekday">${x}</div>`).join("");
@@ -173,7 +207,7 @@ function renderDayCalendar(items){
   const d=new Date(state.calendarDate),events=dayEvents(items,d);
   const hours=Array.from({length:13},(_,i)=>i+8);
   $("professionalCalendar").innerHTML=`<div class="day-calendar" data-date="${localISO(d)}" ondragover="event.preventDefault()" ondrop="calendarDrop(event)">
-    ${hours.map(h=>{const hs=String(h).padStart(2,"0")+":00";const hourEvents=events.filter(c=>Number(String(c.HoraInicio||"0").split(":")[0])===h);return `<div class="hour-row" onclick="calendarHourClick(event,'${localISO(d)}','${hs}')"><time>${h>12?h-12:h}:00 ${h>=12?"PM":"AM"}</time><div>${hourEvents.map(appointmentCard).join("")}</div></div>`}).join("")}
+    ${hours.map(h=>{const hs=String(h).padStart(2,"0")+":00";const hourEvents=events.filter(c=>Number((normalizeTime(c.HoraInicio)||"0:00").split(":")[0])===h);return `<div class="hour-row" onclick="calendarHourClick(event,'${localISO(d)}','${hs}')"><time>${h>12?h-12:h}:00 ${h>=12?"PM":"AM"}</time><div>${hourEvents.map(appointmentCard).join("")}</div></div>`}).join("")}
   </div>`;
 }
 window.calendarDragStart=e=>{e.dataTransfer.setData("text/plain",e.currentTarget.dataset.id);e.dataTransfer.effectAllowed="move";e.stopPropagation()};
@@ -213,8 +247,8 @@ function selectField(label,name,options,value="",wide=false){return `<label clas
 function openAppointment(c={}){
   const clients=state.clientas.map(x=>x.Nombre),services=state.servicios.filter(x=>String(x.Activo).toLowerCase()!=="false").map(x=>x.Servicio);
   openModal(c.ID?"Editar cita":"Nueva cita",
-    field("Fecha","Fecha",String(c.Fecha||today()).slice(0,10),"date")+field("Hora de inicio","HoraInicio",c.HoraInicio||"09:00","time")+
-    field("Hora final","HoraFin",c.HoraFin||"10:00","time")+`<label>Clienta<input name="ClientaNombre" list="clientList" value="${esc(c.ClientaNombre||"")}" required><datalist id="clientList">${clients.map(x=>`<option>${esc(x)}</option>`).join("")}</datalist></label>`+
+    field("Fecha","Fecha",dateKey(c.Fecha||today()),"date")+field("Hora de inicio","HoraInicio",normalizeTime(c.HoraInicio)||"09:00","time")+
+    field("Hora final","HoraFin",normalizeTime(c.HoraFin)||"10:00","time")+`<label>Clienta<input name="ClientaNombre" list="clientList" value="${esc(c.ClientaNombre||"")}" required><datalist id="clientList">${clients.map(x=>`<option>${esc(x)}</option>`).join("")}</datalist></label>`+
     `<label>Servicio<input name="Servicio" list="serviceList" value="${esc(c.Servicio||"")}" required><datalist id="serviceList">${services.map(x=>`<option>${esc(x)}</option>`).join("")}</datalist></label>`+
     field("Empleada","Empleada",c.Empleada||"Lizbeth")+selectField("Estado","Estado",["Pendiente","Confirmada","En servicio","Completada","Cancelada","No se presentó","Lista de espera"],c.Estado||"Pendiente")+
     field("Precio base","PrecioBase",c.PrecioBase||0,"number",false,'step="0.01"')+field("Cargo mismo día","CargoMismoDia",c.CargoMismoDia||0,"number",false,'step="0.01"')+field("Descuento","Descuento",c.Descuento||0,"number",false,'step="0.01"')+
@@ -229,7 +263,7 @@ function openPayment(){openModal("Registrar pago",field("Fecha","Fecha",today(),
 function openCheckIn(){
   const todayCitas=state.citas.filter(c=>String(c.Fecha).slice(0,10)===today()&&!["Cancelada","Completada"].includes(c.Estado));
   if(!todayCitas.length)return toast("No hay citas pendientes para hoy.",true);
-  openModal("Confirmar llegada",selectField("Cita","ID",todayCitas.map(c=>`${c.ID} | ${c.HoraInicio} | ${c.ClientaNombre}`),"",true),"checkin");
+  openModal("Confirmar llegada",selectField("Cita","ID",todayCitas.map(c=>`${c.ID} | ${displayTime(c.HoraInicio)} | ${c.ClientaNombre}`),"",true),"checkin");
 }
 async function saveModal(e){
   e.preventDefault();const data=Object.fromEntries(new FormData(e.target).entries());data.usuarioActual=state.user.Nombre;if(editingId)data.ID=editingId;
