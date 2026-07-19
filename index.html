@@ -1,182 +1,132 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ArtBeauty · Beauty Studio</title>
-  <meta name="theme-color" content="#a7195b" />
-  <meta name="description" content="Sistema de citas y administración de ArtBeauty." />
-  <link rel="icon" type="image/jpeg" href="assets/logo-artbeauty.jpg" />
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#9f1d59">
+  <title>ArtBeauty V2</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="toast" class="toast"></div>
+<div id="toast" class="toast"></div>
+<div id="loading" class="loading hidden"><div class="spinner"></div><span>Conectando con ArtBeauty…</span></div>
 
-  <section id="loginView" class="login-view">
-    <div class="login-card">
-      <div class="logo-shell login-logo"><img src="assets/logo-artbeauty.jpg" alt="Logo de ArtBeauty"></div>
-      <h1>ArtBeauty</h1>
-      <p class="brand-subtitle">Beauty Studio · <strong>@artbeauty.queen</strong></p>
-      <p>Administración inteligente para tu negocio de belleza</p>
-      <label>Usuario</label>
-      <select id="loginUser">
-        <option value="lizbeth">Lizbeth — Administradora</option>
-        <option value="edgar">Edgar — Administrador</option>
-        <option value="recepcion">Recepción</option>
-      </select>
-      <label>Contraseña</label>
-      <input id="loginPassword" type="password" placeholder="Escribe tu contraseña" />
-      <button id="loginBtn" class="primary full">Entrar</button>
-      <small>Demo: usa la contraseña <strong>1234</strong></small>
-    </div>
-  </section>
-
-  <div id="appView" class="app hidden">
-    <aside class="sidebar">
-      <div class="sidebar-brand">
-        <div class="logo-shell sidebar-logo"><img src="assets/logo-artbeauty.jpg" alt="Logo de ArtBeauty"></div>
-        <div><strong>ArtBeauty</strong><span id="roleLabel">Administración</span><small class="sidebar-instagram">@artbeauty.queen</small></div>
+<section id="loginView" class="login-view">
+  <div class="login-shell">
+    <div class="login-brand">
+      <div class="logo">AB</div>
+      <div>
+        <h1>ArtBeauty</h1>
+        <p>Beauty studio management</p>
       </div>
-      <nav id="mainNav">
-        <button data-page="dashboard" class="active">Centro de Control</button>
-        <button data-page="calendar">Agenda</button>
-        <button data-page="clients">Clientas</button>
-        <button data-page="services">Servicios</button>
-        <button data-page="payments">Pagos</button>
-        <button data-page="reception">Modo Recepción</button>
-        <button data-page="ai">ArtBeauty AI</button>
-        <button data-page="settings">Configuración</button>
-      </nav>
-      <button id="logoutBtn" class="logout">Cerrar sesión</button>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <button id="menuBtn" class="menu-btn">☰</button>
-        <div>
-          <h2 id="pageTitle">Centro de Control</h2>
-          <p id="todayText"></p>
-        </div>
-        <div class="user-chip"><span id="userName">Lizbeth</span><b id="userInitial">L</b></div>
-      </header>
-
-      <section id="dashboard" class="page active">
-        <div class="welcome-card">
-          <div>
-            <span class="eyebrow">ASISTENTE INTELIGENTE</span>
-            <h3 id="smartGreeting">Buenos días, Lizbeth 👋</h3>
-            <p id="smartSummary">Hoy tienes citas programadas y oportunidades para mejorar tus ventas.</p>
-          </div>
-          <button class="secondary" data-go="ai">Hablar con ArtBeauty AI</button>
-        </div>
-
-        <div class="stats-grid">
-          <article><span>Citas de hoy</span><strong id="statAppointments">0</strong><small id="statNext">Sin próxima cita</small></article>
-          <article><span>Ventas de hoy</span><strong id="statSales">$0</strong><small>Meta diaria: $450</small></article>
-          <article><span>Clientas VIP</span><strong id="statVip">0</strong><small>Según gasto acumulado</small></article>
-          <article><span>Lista de espera</span><strong id="statWait">0</strong><small>Pendientes por contactar</small></article>
-        </div>
-
-        <div class="two-col">
-          <article class="panel">
-            <div class="panel-head"><h3>Agenda de hoy</h3><button class="link-btn" data-go="calendar">Ver agenda</button></div>
-            <div id="todayAppointments" class="list"></div>
-          </article>
-          <article class="panel">
-            <div class="panel-head"><h3>Alertas y oportunidades</h3></div>
-            <div id="alertsList" class="list"></div>
-          </article>
-        </div>
-      </section>
-
-      <section id="calendar" class="page">
-        <div class="page-actions">
-          <div><h3>Agenda</h3><p>Administra citas, confirmaciones y llegadas.</p></div>
-          <button id="newAppointmentBtn" class="primary">+ Nueva cita</button>
-        </div>
-        <div class="panel filters">
-          <input id="appointmentSearch" placeholder="Buscar por clienta o servicio" />
-          <input id="appointmentDateFilter" type="date" />
-          <select id="appointmentStatusFilter">
-            <option value="">Todos los estados</option>
-            <option>Confirmada</option><option>Pendiente</option><option>En servicio</option><option>Completada</option><option>Cancelada</option>
-          </select>
-        </div>
-        <div id="appointmentsTable" class="table-wrap"></div>
-      </section>
-
-      <section id="clients" class="page">
-        <div class="page-actions">
-          <div><h3>Beauty Profile</h3><p>Historial, preferencias, alergias, fotos y pagos.</p></div>
-          <button id="newClientBtn" class="primary">+ Nueva clienta</button>
-        </div>
-        <div class="panel filters"><input id="clientSearch" placeholder="Buscar por nombre, teléfono o Instagram" /></div>
-        <div id="clientsGrid" class="cards-grid"></div>
-      </section>
-
-      <section id="services" class="page">
-        <div class="page-actions">
-          <div><h3>Servicios</h3><p>Precios, duración y disponibilidad.</p></div>
-          <button id="newServiceBtn" class="primary admin-only">+ Nuevo servicio</button>
-        </div>
-        <div id="servicesGrid" class="cards-grid"></div>
-      </section>
-
-      <section id="payments" class="page">
-        <div class="page-actions"><div><h3>Pagos</h3><p>Cobros, propinas, descuentos y recibos.</p></div><button id="newPaymentBtn" class="primary">+ Registrar pago</button></div>
-        <div class="stats-grid compact">
-          <article><span>Total registrado</span><strong id="paymentTotal">$0</strong></article>
-          <article><span>Propinas</span><strong id="tipTotal">$0</strong></article>
-          <article><span>Saldo pendiente</span><strong id="balanceTotal">$0</strong></article>
-        </div>
-        <div id="paymentsTable" class="table-wrap"></div>
-      </section>
-
-      <section id="reception" class="page">
-        <div class="page-actions"><div><h3>Modo Recepción</h3><p>Vista simplificada para citas, llegadas y cobros.</p></div></div>
-        <div class="reception-grid">
-          <button class="big-action" id="receptionNewAppointment">📅<strong>Agendar cita</strong><span>Registrar una nueva reservación</span></button>
-          <button class="big-action" id="receptionCheckIn">✅<strong>Confirmar llegada</strong><span>Marcar clienta presente</span></button>
-          <button class="big-action" id="receptionPayment">💳<strong>Registrar cobro</strong><span>Pago, propina y recibo</span></button>
-          <button class="big-action" data-go="calendar">⏳<strong>Lista de espera</strong><span>Buscar espacios disponibles</span></button>
-        </div>
-        <article class="panel"><div class="panel-head"><h3>Próximas citas</h3></div><div id="receptionAppointments" class="list"></div></article>
-      </section>
-
-      <section id="ai" class="page">
-        <div class="ai-layout">
-          <article class="panel ai-chat">
-            <div class="panel-head"><div><h3>ArtBeauty AI</h3><p>Consulta información del negocio.</p></div><span class="online">● En línea</span></div>
-            <div id="aiMessages" class="ai-messages">
-              <div class="message bot">Hola, soy ArtBeauty AI. Puedo ayudarte con citas, ventas, clientas y recomendaciones.</div>
-            </div>
-            <div class="quick-prompts">
-              <button>¿Cuánto vendimos hoy?</button><button>¿Cuál servicio se vende más?</button><button>¿Cuántas citas tengo?</button>
-            </div>
-            <div class="ai-input"><input id="aiInput" placeholder="Escribe una pregunta..." /><button id="aiSend" class="primary">Enviar</button></div>
-          </article>
-          <article class="panel"><h3>Recomendaciones</h3><div id="aiRecommendations" class="list"></div></article>
-        </div>
-      </section>
-
-      <section id="settings" class="page">
-        <div class="page-actions"><div><h3>Configuración</h3><p>Preferencias generales de ArtBeauty.</p></div><button id="saveSettingsBtn" class="primary admin-only">Guardar cambios</button></div>
-        <div class="settings-grid">
-          <article class="panel"><h3>Negocio</h3><label>Nombre<input id="businessName" value="ArtBeauty" /></label><label>Teléfono<input id="businessPhone" value="909-302-3069" /></label><label>Instagram<input id="businessInstagram" value="@artbeauty.queen" /></label></article>
-          <article class="panel"><h3>Preferencias</h3><label>Idioma<select id="languageSelect"><option>Español</option><option>English</option><option>Automático</option></select></label><label>Tema<select id="themeSelect"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático</option></select></label><label><input id="reminderToggle" type="checkbox" checked /> Recordatorios automáticos</label></article>
-        </div>
-      </section>
-    </main>
+    </div>
+    <div class="login-card">
+      <span class="pill">V2 · Datos sincronizados</span>
+      <h2>Bienvenida</h2>
+      <p>Inicia sesión para administrar citas, clientas, servicios y pagos.</p>
+      <form id="loginForm">
+        <label>Usuario<input id="loginUser" autocomplete="username" placeholder="lizbeth" required></label>
+        <label>Contraseña<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+        <button class="primary full" type="submit">Entrar</button>
+      </form>
+      <small>La información se guarda en Google Sheets.</small>
+    </div>
   </div>
+</section>
 
-  <dialog id="modal">
-    <form method="dialog" id="modalForm">
-      <div class="modal-head"><h3 id="modalTitle">Nuevo registro</h3><button value="cancel" class="icon-btn">✕</button></div>
-      <div id="modalBody" class="modal-body"></div>
-      <div class="modal-actions"><button value="cancel" class="secondary">Cancelar</button><button id="modalSave" value="default" class="primary">Guardar</button></div>
-    </form>
-  </dialog>
+<div id="appView" class="app hidden">
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-brand"><div class="logo small">AB</div><div><strong>ArtBeauty</strong><span id="roleLabel">Administración</span></div></div>
+    <nav id="mainNav">
+      <button class="active" data-page="dashboard">⌂ <span>Centro de Control</span></button>
+      <button data-page="calendar">▣ <span>Agenda</span></button>
+      <button data-page="clients">♡ <span>Clientas</span></button>
+      <button data-page="services">✦ <span>Servicios</span></button>
+      <button data-page="payments">＄ <span>Pagos</span></button>
+      <button data-page="reception">✓ <span>Recepción</span></button>
+      <button data-page="ai">✧ <span>ArtBeauty AI</span></button>
+      <button data-page="settings" class="admin-nav">⚙ <span>Configuración</span></button>
+    </nav>
+    <button id="logoutBtn" class="logout">Cerrar sesión</button>
+  </aside>
 
-  <script src="app.js"></script>
+  <main class="main">
+    <header class="topbar">
+      <button id="menuBtn" class="icon-btn menu-btn">☰</button>
+      <div><h2 id="pageTitle">Centro de Control</h2><p id="todayText"></p></div>
+      <button id="refreshBtn" class="icon-btn" title="Actualizar">↻</button>
+      <div class="user-chip"><span id="userName"></span><b id="userInitial"></b></div>
+    </header>
+
+    <section id="dashboard" class="page active">
+      <div class="welcome">
+        <div><span class="eyebrow">ARTBEAUTY LIVE</span><h3 id="smartGreeting">Hola 👋</h3><p id="smartSummary">Cargando el resumen del negocio…</p></div>
+        <button class="secondary" data-go="calendar">Ver agenda</button>
+      </div>
+      <div class="stats-grid">
+        <article><span>Citas de hoy</span><strong id="statToday">0</strong><small>Agenda actual</small></article>
+        <article><span>Clientas</span><strong id="statClients">0</strong><small>Registradas</small></article>
+        <article><span>Ingresos</span><strong id="statIncome">$0.00</strong><small>Total registrado</small></article>
+        <article><span>Ganancia estimada</span><strong id="statProfit">$0.00</strong><small>Ingresos menos gastos</small></article>
+      </div>
+      <div class="two-col">
+        <article class="panel"><div class="panel-head"><h3>Agenda de hoy</h3><button class="link-btn" data-go="calendar">Abrir</button></div><div id="todayAppointments" class="list"></div></article>
+        <article class="panel"><div class="panel-head"><h3>Acciones rápidas</h3></div><div class="quick-grid"><button id="quickAppointment">+ Nueva cita</button><button id="quickClient">+ Nueva clienta</button><button id="quickPayment">+ Registrar pago</button><button data-go="reception">Modo recepción</button></div></article>
+      </div>
+    </section>
+
+    <section id="calendar" class="page">
+      <div class="page-actions"><div><h3>Agenda</h3><p>Citas sincronizadas con Google Sheets.</p></div><button id="newAppointmentBtn" class="primary">+ Nueva cita</button></div>
+      <div class="panel filters"><input id="appointmentSearch" placeholder="Buscar clienta o servicio"><input id="appointmentDateFilter" type="date"><select id="appointmentStatusFilter"><option value="">Todos los estados</option><option>Pendiente</option><option>Confirmada</option><option>En servicio</option><option>Completada</option><option>Cancelada</option><option>No se presentó</option><option>Lista de espera</option></select></div>
+      <div id="appointmentsTable" class="table-wrap"></div>
+    </section>
+
+    <section id="clients" class="page">
+      <div class="page-actions"><div><h3>Clientas</h3><p>Perfil, contacto, preferencias y notas.</p></div><button id="newClientBtn" class="primary">+ Nueva clienta</button></div>
+      <div class="panel filters"><input id="clientSearch" placeholder="Buscar por nombre, teléfono o Instagram"></div>
+      <div id="clientsGrid" class="cards-grid"></div>
+    </section>
+
+    <section id="services" class="page">
+      <div class="page-actions"><div><h3>Servicios</h3><p>Precios y duración cargados desde la hoja.</p></div><button id="newServiceBtn" class="primary admin-only">+ Nuevo servicio</button></div>
+      <div id="servicesGrid" class="cards-grid"></div>
+    </section>
+
+    <section id="payments" class="page">
+      <div class="page-actions"><div><h3>Pagos</h3><p>Cobros, depósitos, saldos y propinas.</p></div><button id="newPaymentBtn" class="primary">+ Registrar pago</button></div>
+      <div class="stats-grid compact"><article><span>Total</span><strong id="paymentTotal">$0.00</strong></article><article><span>Propinas</span><strong id="tipTotal">$0.00</strong></article><article><span>Saldo pendiente</span><strong id="balanceTotal">$0.00</strong></article></div>
+      <div id="paymentsTable" class="table-wrap"></div>
+    </section>
+
+    <section id="reception" class="page">
+      <div class="page-actions"><div><h3>Modo Recepción</h3><p>Una vista rápida para atender a las clientas.</p></div></div>
+      <div class="reception-grid">
+        <button id="receptionNewAppointment">📅<strong>Agendar cita</strong><span>Nueva reservación</span></button>
+        <button id="receptionNewClient">👩<strong>Registrar clienta</strong><span>Crear perfil</span></button>
+        <button id="receptionCheckIn">✅<strong>Confirmar llegada</strong><span>Pasar a “En servicio”</span></button>
+        <button id="receptionPayment">💳<strong>Registrar cobro</strong><span>Pago y propina</span></button>
+      </div>
+      <article class="panel"><div class="panel-head"><h3>Citas de hoy</h3></div><div id="receptionAppointments" class="list"></div></article>
+    </section>
+
+    <section id="ai" class="page">
+      <div class="ai-layout">
+        <article class="panel ai-chat"><div class="panel-head"><div><h3>ArtBeauty AI</h3><p>Asistente basado en los datos actuales del negocio.</p></div><span class="online">● En línea</span></div><div id="aiMessages" class="ai-messages"><div class="message bot">Hola. Pregúntame por citas, ingresos, clientas o el servicio más solicitado.</div></div><div class="quick-prompts"><button>¿Cuántas citas hay hoy?</button><button>¿Cuánto hemos vendido?</button><button>¿Cuál servicio se solicita más?</button></div><div class="ai-input"><input id="aiInput" placeholder="Escribe una pregunta…"><button id="aiSend" class="primary">Enviar</button></div></article>
+        <article class="panel"><h3>Resumen inteligente</h3><div id="aiRecommendations" class="list"></div></article>
+      </div>
+    </section>
+
+    <section id="settings" class="page">
+      <div class="page-actions"><div><h3>Configuración</h3><p>Información principal del negocio.</p></div><button id="saveSettingsBtn" class="primary admin-only">Guardar cambios</button></div>
+      <div class="settings-grid">
+        <article class="panel"><label>Nombre<input id="businessName"></label><label>Teléfono<input id="businessPhone"></label><label>Instagram<input id="businessInstagram"></label><label>Dirección<textarea id="businessAddress"></textarea></label></article>
+        <article class="panel"><label>Tema<select id="themeSelect"><option value="light">Claro</option><option value="dark">Oscuro</option><option value="system">Automático</option></select></label><p class="muted">Los cambios del negocio se guardan en la pestaña Configuracion.</p><div class="api-status"><b>Conexión</b><span id="apiStatus">Comprobando…</span></div></article>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="modal"><form id="modalForm"><div class="modal-head"><h3 id="modalTitle"></h3><button type="button" id="modalClose" class="icon-btn">✕</button></div><div id="modalBody" class="modal-body"></div><div class="modal-actions"><button type="button" id="modalCancel" class="secondary">Cancelar</button><button type="submit" id="modalSave" class="primary">Guardar</button></div></form></dialog>
+<script src="app.js"></script>
 </body>
 </html>
