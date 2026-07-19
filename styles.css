@@ -28,3 +28,45 @@ body.dark .calendar-weekday{background:#2b1922}body.dark .calendar-day:hover,bod
   font-weight:900;
   letter-spacing:.08em;
 }
+
+/* ArtBeauty 3.1 - Expediente de clientas */
+.client-card-pro{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+.client-card-pro:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(72,32,52,.12)}
+.client-card-top{display:flex;align-items:center;gap:12px}
+.client-card-top p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.client-avatar{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,var(--brand),#e56aa4);color:#fff;font-weight:900;font-size:18px;flex:0 0 auto}
+.client-card-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.client-card-metrics span{padding:10px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.38)}
+.client-card-metrics b,.client-card-metrics small{display:block}.client-card-metrics b{font-size:15px}.client-card-metrics small{font-size:10px;color:var(--muted);margin-top:2px}
+.client-card-last{font-size:11px;color:var(--muted);margin:0 0 9px}
+.client-card-tags{display:flex;gap:6px;flex-wrap:wrap;min-height:24px}
+.client-card-tags span{padding:5px 8px;border-radius:999px;background:#f7e7ef;color:var(--brand);font-size:10px;font-weight:800}
+.client-profile-dialog{width:min(1100px,96vw);max-height:94vh;padding:0;border:0;border-radius:24px;background:var(--card);color:var(--text);box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.client-profile-dialog::backdrop{background:rgba(25,10,18,.65);backdrop-filter:blur(5px)}
+.client-profile-shell{min-height:500px}
+.client-profile-header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;gap:20px;align-items:center;padding:22px 24px;border-bottom:1px solid var(--line);background:var(--card)}
+.client-profile-header h2{margin:4px 0}.client-profile-header p{margin:0;color:var(--muted)}
+.client-profile-header-actions{display:flex;align-items:center;gap:8px}
+.client-profile-body{padding:22px;display:grid;gap:18px}
+.profile-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.profile-summary-grid article{padding:17px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.8),rgba(247,231,239,.55))}
+.profile-summary-grid span,.profile-summary-grid strong{display:block}.profile-summary-grid span{color:var(--muted);font-size:11px}.profile-summary-grid strong{font-size:24px;margin-top:6px}
+.profile-section{padding:18px;border:1px solid var(--line);border-radius:18px;background:var(--card)}
+.profile-section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.profile-section-title h3{margin:0}.profile-section-title span{font-size:11px;color:var(--muted)}
+.profile-info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.profile-info-item{padding:12px;border-radius:13px;background:rgba(247,231,239,.48)}
+.profile-info-item small,.profile-info-item strong{display:block}.profile-info-item small{color:var(--muted);font-size:10px}.profile-info-item strong{margin-top:4px;font-size:13px}
+.profile-notes{margin-top:12px;padding:14px;border-radius:13px;border:1px dashed var(--line)}.profile-notes small{color:var(--muted)}.profile-notes p{margin:6px 0 0;white-space:pre-wrap}
+.profile-timeline{display:grid;gap:9px}.profile-timeline article{display:grid;grid-template-columns:115px 1fr auto;gap:14px;align-items:center;padding:13px;border-radius:14px;background:rgba(247,231,239,.38)}
+.timeline-date b,.timeline-date small,.timeline-content strong,.timeline-content small{display:block}.timeline-date small,.timeline-content small{color:var(--muted);margin-top:3px}.timeline-content p{margin:7px 0 0;font-size:11px;color:var(--muted)}
+.timeline-amount{font-weight:900}
+.profile-payment-list{display:grid;gap:8px}.profile-payment-list article{display:flex;justify-content:space-between;gap:16px;padding:12px 14px;border-radius:13px;border:1px solid var(--line)}.profile-payment-list strong,.profile-payment-list small{display:block}.profile-payment-list small{color:var(--muted);margin-top:3px}
+.profile-alert{text-align:center;color:#267052;background:#e6f7ef}.profile-alert.has-alert{color:#9f3743;background:#fde9ec}
+body.dark .client-card-tags span{background:#472537}body.dark .profile-summary-grid article,body.dark .profile-info-item,body.dark .profile-timeline article{background:#2d1b24}
+@media(max-width:800px){
+  .client-profile-dialog{width:100vw;max-width:none;height:100vh;max-height:none;border-radius:0}
+  .client-profile-header{align-items:flex-start;padding:17px;flex-direction:column}.client-profile-header-actions{width:100%;justify-content:space-between}
+  .client-profile-body{padding:14px}.profile-summary-grid{grid-template-columns:1fr 1fr}.profile-info-grid{grid-template-columns:1fr 1fr}
+  .profile-timeline article{grid-template-columns:90px 1fr}.timeline-amount{grid-column:2}
+}
+@media(max-width:480px){.profile-info-grid{grid-template-columns:1fr}.profile-summary-grid article strong{font-size:19px}}

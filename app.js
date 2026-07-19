@@ -1,4 +1,4 @@
-console.info("ArtBeauty V3.0.1 cargado correctamente");
+console.info("ArtBeauty V3.1.0 cargado correctamente");
 const API_URL = "https://script.google.com/macros/s/AKfycbyNdSbHFgVadu08GVDlNQT5Dqat97l8pi33nVlkDBcBv1o-unYV8Gewq4Fi2NdK7ywNGw/exec";
 const state = { user:null, dashboard:null, citas:[], clientas:[], servicios:[], pagos:[], configuracion:{}, calendarView:"week", calendarDate:new Date() };
 const $ = id => document.getElementById(id);
@@ -79,6 +79,8 @@ function bindEvents(){
   $("calendarPrev").onclick=()=>moveCalendar(-1);$("calendarNext").onclick=()=>moveCalendar(1);$("calendarToday").onclick=()=>{state.calendarDate=new Date();renderAppointments()};
   document.querySelectorAll("[data-calendar-view]").forEach(b=>b.onclick=()=>{state.calendarView=b.dataset.calendarView;document.querySelectorAll("[data-calendar-view]").forEach(x=>x.classList.toggle("active",x===b));renderAppointments()});
   $("clientSearch").oninput=renderClients;
+  $("profileCloseBtn").onclick=()=>$("clientProfileDialog").close();
+  $("profileEditBtn").onclick=()=>{const id=$("clientProfileDialog").dataset.clientId;const c=state.clientas.find(x=>String(x.ID)===String(id));if(c){$("clientProfileDialog").close();openClient(c)}};
   $("modalClose").onclick=closeModal;$("modalCancel").onclick=closeModal;$("modalForm").onsubmit=saveModal;
   $("aiSend").onclick=sendAI;$("aiInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendAI()});
   document.querySelectorAll(".quick-prompts button").forEach(b=>b.onclick=()=>{$("aiInput").value=b.textContent;sendAI()});
@@ -223,9 +225,116 @@ window.calendarHourClick=(e,date,hour)=>{if(e.target.closest(".calendar-event"))
 window.openDayFromCalendar=(e,date)=>{e.stopPropagation();state.calendarDate=parseLocalDate(date);state.calendarView="day";document.querySelectorAll("[data-calendar-view]").forEach(x=>x.classList.toggle("active",x.dataset.calendarView==="day"));renderAppointments()};
 
 function renderClients(){
-  const q=$("clientSearch").value.toLowerCase();const items=state.clientas.filter(c=>`${c.Nombre} ${c.Telefono} ${c.Instagram}`.toLowerCase().includes(q));
-  $("clientsGrid").innerHTML=items.length?items.map(c=>`<article class="client-card"><strong>${esc(c.Nombre)}</strong><p class="muted">${esc(c.Telefono||"Sin teléfono")}<br>${esc(c.Instagram||"")}</p><small>${esc(c.ServiciosFavoritos||c.Notas||"Sin notas")}</small><div class="card-actions"><button class="small-btn" onclick='editClient(${JSON.stringify(c.ID)})'>Editar</button></div></article>`).join(""):'<div class="empty">No hay clientas registradas.</div>';
+  const q=$("clientSearch").value.toLowerCase();
+  const items=state.clientas.filter(c=>`${c.Nombre} ${c.Telefono} ${c.Instagram} ${c.Email||""}`.toLowerCase().includes(q));
+  $("clientsGrid").innerHTML=items.length?items.map(c=>{
+    const citas=clientAppointments(c),pagos=clientPayments(c,citas);
+    const ultima=citas.slice().sort((a,b)=>dateKey(b.Fecha).localeCompare(dateKey(a.Fecha)))[0];
+    const total=pagos.reduce((sum,p)=>sum+Number(p.Total||0),0);
+    return `<article class="client-card client-card-pro" onclick='openClientProfile(${JSON.stringify(c.ID)})'>
+      <div class="client-card-top">
+        <div class="client-avatar">${esc((c.Nombre||"?").trim().charAt(0).toUpperCase())}</div>
+        <div><strong>${esc(c.Nombre)}</strong><p>${esc(c.Telefono||"Sin teléfono")}</p></div>
+      </div>
+      <div class="client-card-metrics">
+        <span><b>${citas.length}</b><small>Citas</small></span>
+        <span><b>${money(total)}</b><small>Compras</small></span>
+      </div>
+      <p class="client-card-last">${ultima?`Última visita: ${esc(dateKey(ultima.Fecha))}`:"Sin visitas registradas"}</p>
+      <div class="client-card-tags">
+        ${c.ColoresFavoritos?`<span>${esc(c.ColoresFavoritos)}</span>`:""}
+        ${c.ServiciosFavoritos?`<span>${esc(c.ServiciosFavoritos)}</span>`:""}
+      </div>
+      <div class="card-actions">
+        <button class="small-btn" onclick='event.stopPropagation();openClientProfile(${JSON.stringify(c.ID)})'>Ver expediente</button>
+        <button class="small-btn" onclick='event.stopPropagation();editClient(${JSON.stringify(c.ID)})'>Editar</button>
+      </div>
+    </article>`;
+  }).join(""):'<div class="empty">No hay clientas registradas.</div>';
 }
+function clientAppointments(c){
+  const id=String(c.ID||""),name=String(c.Nombre||"").trim().toLowerCase();
+  return state.citas.filter(a=>
+    (id && String(a.ClientaID||"")===id) ||
+    (name && String(a.ClientaNombre||"").trim().toLowerCase()===name)
+  );
+}
+function clientPayments(c,citas=clientAppointments(c)){
+  const id=String(c.ID||""),appointmentIds=new Set(citas.map(a=>String(a.ID||"")));
+  return state.pagos.filter(p=>
+    (id && String(p.ClientaID||"")===id) ||
+    (p.CitaID && appointmentIds.has(String(p.CitaID)))
+  );
+}
+function clientTopService(citas){
+  const counts={};
+  citas.forEach(c=>{const s=String(c.Servicio||"").trim();if(s)counts[s]=(counts[s]||0)+1});
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0]||"Sin información";
+}
+function profileInfo(label,value){
+  return `<div class="profile-info-item"><small>${esc(label)}</small><strong>${esc(value||"—")}</strong></div>`;
+}
+window.openClientProfile=id=>{
+  const c=state.clientas.find(x=>String(x.ID)===String(id));if(!c)return;
+  const citas=clientAppointments(c).sort((a,b)=>`${dateKey(b.Fecha)} ${normalizeTime(b.HoraInicio)}`.localeCompare(`${dateKey(a.Fecha)} ${normalizeTime(a.HoraInicio)}`));
+  const pagos=clientPayments(c,citas).sort((a,b)=>dateKey(b.Fecha).localeCompare(dateKey(a.Fecha)));
+  const total=pagos.reduce((sum,p)=>sum+Number(p.Total||0),0);
+  const tips=pagos.reduce((sum,p)=>sum+Number(p.Propina||0),0);
+  const completed=citas.filter(x=>String(x.Estado).toLowerCase()==="completada").length;
+  const cancelled=citas.filter(x=>["cancelada","no se presentó"].includes(String(x.Estado).toLowerCase())).length;
+  $("clientProfileDialog").dataset.clientId=id;
+  $("profileClientName").textContent=c.Nombre||"Clienta";
+  $("profileClientSubtitle").textContent=[c.Telefono,c.Email,c.Instagram].filter(Boolean).join(" · ")||"Sin información de contacto";
+  $("clientProfileBody").innerHTML=`
+    <section class="profile-summary-grid">
+      <article><span>Total de citas</span><strong>${citas.length}</strong></article>
+      <article><span>Visitas completadas</span><strong>${completed}</strong></article>
+      <article><span>Total pagado</span><strong>${money(total)}</strong></article>
+      <article><span>Propinas</span><strong>${money(tips)}</strong></article>
+    </section>
+
+    <section class="profile-section">
+      <div class="profile-section-title"><h3>Información y preferencias</h3></div>
+      <div class="profile-info-grid">
+        ${profileInfo("Teléfono",c.Telefono)}
+        ${profileInfo("Email",c.Email)}
+        ${profileInfo("Instagram",c.Instagram)}
+        ${profileInfo("Servicio más frecuente",clientTopService(citas))}
+        ${profileInfo("Colores favoritos",c.ColoresFavoritos)}
+        ${profileInfo("Diseños favoritos",c.DisenosFavoritos)}
+        ${profileInfo("Servicios favoritos",c.ServiciosFavoritos)}
+        ${profileInfo("Alergias",c.Alergias)}
+      </div>
+      <div class="profile-notes"><small>Notas privadas</small><p>${esc(c.Notas||"Sin notas registradas.")}</p></div>
+    </section>
+
+    <section class="profile-section">
+      <div class="profile-section-title"><h3>Historial de citas</h3><span>${citas.length} registros</span></div>
+      <div class="profile-timeline">
+        ${citas.length?citas.slice(0,20).map(a=>`<article>
+          <div class="timeline-date"><b>${esc(dateKey(a.Fecha))}</b><small>${esc(displayTime(a.HoraInicio))}</small></div>
+          <div class="timeline-content"><strong>${esc(a.Servicio||"Servicio")}</strong><small>${esc(a.Empleada||"")} · ${esc(a.Estado||"")}</small>${a.Notas?`<p>${esc(a.Notas)}</p>`:""}</div>
+          <div class="timeline-amount">${money(a.Total||a.PrecioBase||0)}</div>
+        </article>`).join(""):'<div class="empty">Esta clienta todavía no tiene citas registradas.</div>'}
+      </div>
+    </section>
+
+    <section class="profile-section">
+      <div class="profile-section-title"><h3>Historial de pagos</h3><span>${pagos.length} registros</span></div>
+      <div class="profile-payment-list">
+        ${pagos.length?pagos.slice(0,20).map(p=>`<article>
+          <div><strong>${esc(dateKey(p.Fecha))}</strong><small>${esc(p.MetodoPago||"Método no indicado")}</small></div>
+          <div><strong>${money(p.Total)}</strong><small>Propina ${money(p.Propina)}</small></div>
+        </article>`).join(""):'<div class="empty">No hay pagos vinculados con esta clienta.</div>'}
+      </div>
+    </section>
+
+    <section class="profile-section profile-alert ${cancelled?"has-alert":""}">
+      <strong>${cancelled?`${cancelled} cancelación(es) o ausencia(s) registrada(s)`:"Sin cancelaciones ni ausencias registradas"}</strong>
+    </section>`;
+  $("clientProfileDialog").showModal();
+};
+
 function renderServices(){
   $("servicesGrid").innerHTML=state.servicios.length?state.servicios.map(s=>`<article class="service-card"><strong>${esc(s.Servicio)}</strong><p class="muted">${esc(s.Categoria)} · ${Number(s.DuracionMinutos||0)} min</p><div class="price">${s.PrecioDesde?"Desde ":""}${money(s.Precio)}</div><span class="badge ${s.Activo===true||String(s.Activo).toLowerCase()==="true"?"confirmada":"cancelada"}">${s.Activo===true||String(s.Activo).toLowerCase()==="true"?"Activo":"Inactivo"}</span></article>`).join(""):'<div class="empty">No hay servicios.</div>';
 }

@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#9f1d59">
-  <title>ArtBeauty V3 · Calendario Profesional</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.1">
+  <title>ArtBeauty V3.1 · Expediente de Clientas</title>
+  <link rel="stylesheet" href="styles.css?v=3.1.0">
 </head>
 <body>
 <div id="toast" class="toast"></div>
@@ -105,7 +105,7 @@
     </section>
 
     <section id="clients" class="page">
-      <div class="page-actions"><div><h3>Clientas</h3><p>Perfil, contacto, preferencias y notas.</p></div><button id="newClientBtn" class="primary">+ Nueva clienta</button></div>
+      <div class="page-actions"><div><span class="version-chip">EXPEDIENTES V3.1</span><h3>Clientas</h3><p>Perfil, contacto, preferencias, historial de citas y pagos.</p></div><button id="newClientBtn" class="primary">+ Nueva clienta</button></div>
       <div class="panel filters"><input id="clientSearch" placeholder="Buscar por nombre, teléfono o Instagram"></div>
       <div id="clientsGrid" class="cards-grid"></div>
     </section>
@@ -150,6 +150,24 @@
 </div>
 
 <dialog id="modal"><form id="modalForm"><div class="modal-head"><h3 id="modalTitle"></h3><button type="button" id="modalClose" class="icon-btn">✕</button></div><div id="modalBody" class="modal-body"></div><div class="modal-actions"><button type="button" id="modalCancel" class="secondary">Cancelar</button><button type="submit" id="modalSave" class="primary">Guardar</button></div></form></dialog>
-<script src="app.js?v=3.0.1"></script>
+<script src="app.js?v=3.1.0"></script>
+
+  <dialog id="clientProfileDialog" class="client-profile-dialog">
+    <div class="client-profile-shell">
+      <header class="client-profile-header">
+        <div>
+          <span class="eyebrow">EXPEDIENTE DE CLIENTA</span>
+          <h2 id="profileClientName">Clienta</h2>
+          <p id="profileClientSubtitle"></p>
+        </div>
+        <div class="client-profile-header-actions">
+          <button id="profileEditBtn" class="secondary">Editar información</button>
+          <button id="profileCloseBtn" class="icon-btn" aria-label="Cerrar">×</button>
+        </div>
+      </header>
+      <div id="clientProfileBody" class="client-profile-body"></div>
+    </div>
+  </dialog>
+
 </body>
 </html>
